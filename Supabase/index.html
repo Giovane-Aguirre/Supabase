@@ -1,0 +1,103 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Supabase Demo - Produtos</title>
+    </head>
+    <body>
+      <h1>Lista de Produtos</h1>
+      <div id="product-list">Carregando produtos...</div>
+    
+      <h2>Adicionar Produto</h2>
+      <input type="text" id="product-name" placeholder="Nome do Produto">
+      <input type="number" id="product-quantity" placeholder="Quantidade">
+      <input type="number" id="product-price" placeholder="Preço">
+      <button onclick="addProduct()">Adicionar Produto</button>
+    
+      <!-- Incluindo o Supabase JavaScript SDK -->
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.7/dist/umd/supabase.min.js"></script>
+      <script>
+        // Definindo URL e chave do Supabase
+        const SUPABASE_URL = '<YOUR_SUPABASE_URL>';
+        const SUPABASE_ANON_KEY = '<YOUR_SUPABASE_ANON_KEY>';
+    
+        // Inicializar Supabase
+        let supabase;
+        window.onload = () => {
+          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          fetchProducts();
+        };
+    
+        // Função para buscar e exibir produtos
+        async function fetchProducts() {
+          if (!supabase) {
+            console.error('Erro: Supabase não inicializado corretamente.');
+            return;
+          }
+    
+          try {
+            const { data: products, error } = await supabase
+              .from('products')
+              .select('*');
+    
+            if (error) {
+              console.error('Erro ao carregar produtos:', error);
+              document.getElementById('product-list').innerText = 'Erro ao carregar produtos.';
+              return;
+            }
+    
+            if (products.length === 0) {
+              document.getElementById('product-list').innerText = 'Nenhum produto encontrado.';
+              return;
+            }
+    
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = ''; // Limpar lista antes de exibir
+            products.forEach(product => {
+              const productDiv = document.createElement('div');
+              productDiv.innerHTML = `
+                <strong>Nome:</strong> ${product.name} <br>
+                <strong>Quantidade:</strong> ${product.quantity} <br>
+                <strong>Preço:</strong> ${product.price} <br><br>
+              `;
+              productList.appendChild(productDiv);
+            });
+          } catch (error) {
+            console.error('Erro ao executar fetchProducts:', error);
+          }
+        }
+    
+        // Função para adicionar produto
+        async function addProduct() {
+          const name = document.getElementById('product-name').value;
+          const quantity = document.getElementById('product-quantity').value;
+          const price = document.getElementById('product-price').value;
+    
+          if (!name || !quantity || !price) {
+            alert("Preencha todos os campos.");
+            return;
+          }
+    
+          try {
+            const { error } = await supabase
+              .from('products')
+              .insert([{ name, quantity: parseInt(quantity), price: parseFloat(price) }]);
+    
+            if (error) {
+              console.error('Erro ao adicionar produto:', error);
+              alert("Erro ao adicionar produto. Verifique o console para mais detalhes.");
+              return;
+            }
+    
+            alert("Produto adicionado com sucesso!");
+            fetchProducts(); // Atualiza a lista de produtos
+          } catch (error) {
+            console.error('Erro ao executar addProduct:', error);
+          }
+        }
+      </script>
+    </body>
+    </html>
+    
